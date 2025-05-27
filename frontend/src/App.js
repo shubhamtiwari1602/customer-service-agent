@@ -5,7 +5,7 @@ import './App.css';
 const getApiUrl = () => {
   // Production API URL (replace with your deployed backend URL)
   if (process.env.NODE_ENV === 'production') {
-    return process.env.REACT_APP_API_URL || 'https://your-api-domain.railway.app';
+    return process.env.REACT_APP_API_URL || 'https://customer-service-agent-api.onrender.com';
   }
   // Development API URL
   return 'http://localhost:8000';
