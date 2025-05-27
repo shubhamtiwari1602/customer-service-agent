@@ -2,7 +2,6 @@
   "name": "customer-service-agent-frontend",
   "version": "0.1.0",
   "private": true,
-  "homepage": "https://yourusername.github.io/customer-service-agent",
   "dependencies": {
     "@testing-library/dom": "^10.4.0",
     "@testing-library/jest-dom": "^6.6.3",
