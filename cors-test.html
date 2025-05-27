@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CORS Test - Customer Service Agent</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 40px; }
+        .test-box { border: 1px solid #ccc; padding: 20px; margin: 20px 0; border-radius: 8px; }
+        .success { border-color: green; background: #f0fff0; }
+        .error { border-color: red; background: #fff0f0; }
+        button { padding: 10px 20px; margin: 10px 0; cursor: pointer; }
+        pre { background: #f5f5f5; padding: 10px; border-radius: 4px; white-space: pre-wrap; }
+    </style>
+</head>
+<body>
+    <h1>Customer Service Agent - CORS Connection Test</h1>
+    
+    <div class="test-box">
+        <h2>Backend Status Test</h2>
+        <button onclick="testBackend()">Test Backend Connection</button>
+        <div id="backend-result"></div>
+    </div>
+
+    <div class="test-box">
+        <h2>Live Frontend Test</h2>
+        <button onclick="testFrontend()">Test Main App Query</button>
+        <div id="frontend-result"></div>
+    </div>
+
+    <div class="test-box">
+        <h2>Debug Information</h2>
+        <pre id="debug-info"></pre>
+    </div>
+
+    <script>
+        const API_URL = 'https://customer-service-agent-api.onrender.com';
+        const FRONTEND_URL = 'https://customer-service-agent-black.vercel.app';
+        
+        function updateDebugInfo() {
+            const debugInfo = document.getElementById('debug-info');
+            debugInfo.textContent = `
+Current URL: ${window.location.href}
+API URL: ${API_URL}
+Frontend URL: ${FRONTEND_URL}
+User Agent: ${navigator.userAgent}
+Timestamp: ${new Date().toISOString()}
+            `.trim();
+        }
+
+        async function testBackend() {
+            const result = document.getElementById('backend-result');
+            result.innerHTML = '<p>Testing backend connection...</p>';
+            
+            try {
+                const response = await fetch(`${API_URL}/health`);
+                const data = await response.json();
+                
+                result.innerHTML = `
+                    <div class="success">
+                        <h3>✅ Backend Health Check: SUCCESS</h3>
+                        <pre>${JSON.stringify(data, null, 2)}</pre>
+                    </div>
+                `;
+                
+                // Now test the classify endpoint with CORS
+                testClassifyEndpoint();
+                
+            } catch (error) {
+                result.innerHTML = `
+                    <div class="error">
+                        <h3>❌ Backend Health Check: FAILED</h3>
+                        <p>Error: ${error.message}</p>
+                    </div>
+                `;
+            }
+        }
+
+        async function testClassifyEndpoint() {
+            const result = document.getElementById('backend-result');
+            
+            try {
+                const response = await fetch(`${API_URL}/classify`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        query: 'Test CORS connection',
+                        customer_info: { name: 'Test User' }
+                    })
+                });
+                
+                const data = await response.json();
+                
+                result.innerHTML += `
+                    <div class="success">
+                        <h3>✅ CORS Classify Test: SUCCESS</h3>
+                        <pre>${JSON.stringify(data, null, 2)}</pre>
+                    </div>
+                `;
+                
+            } catch (error) {
+                result.innerHTML += `
+                    <div class="error">
+                        <h3>❌ CORS Classify Test: FAILED</h3>
+                        <p>Error: ${error.message}</p>
+                        <p><strong>This is likely the CORS issue!</strong></p>
+                        <p>Solution: Redeploy the backend on Render.com</p>
+                    </div>
+                `;
+            }
+        }
+
+        async function testFrontend() {
+            const result = document.getElementById('frontend-result');
+            result.innerHTML = `
+                <div>
+                    <h3>Frontend App Link</h3>
+                    <p>Click to test the main application:</p>
+                    <a href="${FRONTEND_URL}" target="_blank" style="display: inline-block; padding: 10px 20px; background: #007cba; color: white; text-decoration: none; border-radius: 4px;">
+                        Open Customer Service Agent App
+                    </a>
+                    <p><small>Try submitting a query like "I need help with login" to test the connection.</small></p>
+                </div>
+            `;
+        }
+
+        // Initialize debug info on page load
+        updateDebugInfo();
+    </script>
+</body>
+</html>
