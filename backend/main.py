@@ -14,10 +14,12 @@ app = FastAPI(title="Customer Service Agent API", version="1.0.0")
 # Environment-aware CORS configuration
 CORS_ORIGINS = [
     "http://localhost:3000",  # Local development
+    "http://localhost:3001",  # Alternative local port
     "https://localhost:3000", # Local HTTPS
+    "https://customer-service-agent-black.vercel.app",  # Production Vercel
+    "https://*.vercel.app",   # All Vercel deployments
     "https://*.github.io",    # GitHub Pages
     "https://*.githubpages.io", # GitHub Pages alternative
-    "https://*.vercel.app",   # Vercel deployments
     "https://*.netlify.app",  # Netlify deployments
 ]
 
@@ -25,13 +27,13 @@ CORS_ORIGINS = [
 if os.getenv("PRODUCTION_DOMAIN"):
     CORS_ORIGINS.append(os.getenv("PRODUCTION_DOMAIN"))
 
-# Add CORS middleware
+# Add CORS middleware with more permissive settings for production
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=CORS_ORIGINS,
-    allow_origin_regex=r"https://.*\.github\.io",
+    allow_origins=["*"] if os.getenv("VERCEL") else CORS_ORIGINS,  # Allow all origins on Vercel
+    allow_origin_regex=r"https://.*\.(vercel\.app|github\.io|netlify\.app)",
     allow_credentials=True,
-    allow_methods=["*"],
+    allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
     allow_headers=["*"],
 )
 

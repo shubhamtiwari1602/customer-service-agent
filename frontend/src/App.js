@@ -3,15 +3,30 @@ import './App.css';
 
 // Environment-aware API URL configuration
 const getApiUrl = () => {
-  // Production API URL (replace with your deployed backend URL)
-  if (process.env.NODE_ENV === 'production') {
-    return process.env.REACT_APP_API_URL || 'https://customer-service-agent-api.onrender.com';
+  // Check for explicit environment variable first
+  if (process.env.REACT_APP_API_URL) {
+    console.log('Using REACT_APP_API_URL:', process.env.REACT_APP_API_URL);
+    return process.env.REACT_APP_API_URL;
   }
+  
+  // Production detection (multiple ways)
+  const isProduction = process.env.NODE_ENV === 'production' || 
+                      window.location.hostname.includes('vercel.app') ||
+                      window.location.hostname.includes('github.io') ||
+                      window.location.hostname.includes('netlify.app');
+  
+  if (isProduction) {
+    console.log('Detected production environment, using Render backend');
+    return 'https://customer-service-agent-api.onrender.com';
+  }
+  
   // Development API URL
+  console.log('Using development backend');
   return 'http://localhost:8000';
 };
 
 const API_BASE_URL = getApiUrl();
+console.log('Final API_BASE_URL:', API_BASE_URL);
 
 const SentimentIcon = ({ sentiment }) => {
   const icons = {
@@ -78,6 +93,7 @@ function App() {
     setResponse(null);
     
     try {
+      console.log('Making request to:', `${API_BASE_URL}/classify`);
       const res = await fetch(`${API_BASE_URL}/classify`, {
         method: 'POST',
         headers: {
@@ -90,18 +106,31 @@ function App() {
         }),
       });
       
+      console.log('Response status:', res.status);
+      
       if (!res.ok) {
-        throw new Error(`Server error: ${res.status}`);
+        const errorText = await res.text();
+        console.error('Server error response:', errorText);
+        throw new Error(`Server error: ${res.status} - ${errorText}`);
       }
       
       const data = await res.json();
+      console.log('Response data:', data);
       setResponse(data);
     } catch (error) {
-      console.error('Error:', error);
-      setError(error.message);
+      console.error('Error details:', error);
+      let errorMessage = 'Failed to get response from server. ';
+      
+      if (error.name === 'TypeError' && error.message.includes('fetch')) {
+        errorMessage += `Unable to connect to the service. Please ensure the backend server is running.\n\nAPI URL: ${API_BASE_URL}\nError details: ${error.message}`;
+      } else {
+        errorMessage += `Please check if the backend is running and try again.\n\nError details: ${error.message}`;
+      }
+      
+      setError(errorMessage);
       setResponse({
         classification: 'Error',
-        response: 'Failed to get response from server. Please check if the backend is running and try again.',
+        response: errorMessage,
         needs_escalation: true,
         sentiment: 'neutral',
         confidence: 0
